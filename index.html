@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spread My Wings - Visualizador de Objetivos</title>
+    <meta name="description"
+        content="Gamifica tu vida con un sistema de skill-tree interactivo para alcanzar tus objetivos">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Vis-Network para renderizado de grafos -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
+    <!-- Canvas Confetti para animaciones -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <h1 class="logo">
+                <span class="logo-icon">🦋</span>
+                <span class="logo-text">Spread My Wings</span>
+            </h1>
+            <div class="header-actions">
+                <button class="btn-icon" id="manualSaveBtn" title="Guardar Ahora">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="adminToggleBtn" title="Modo Administración">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M12 1v6m0 6v6m0-12a2 2 0 0 1 3.46 0M12 15a2 2 0 0 1-3.46 0M12 1a2 2 0 0 1-3.46 0M12 15a2 2 0 0 1 3.46 0">
+                        </path>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="achievementsBtn" title="Salón de la Fama">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+                        <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+                        <path d="M4 22h16"></path>
+                        <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+                        <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+                        <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="dailyGoalsBtn" title="Objetivos Diarios">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="exportBtn" title="Exportar Progreso">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="cloudSyncBtn" title="Sincronización en la Nube">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="importBtn" title="Importar Progreso">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                </button>
+                <button class="btn-icon" id="resetBtn" title="Reiniciar Todo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Vista 1: Mapa de Capítulos -->
+        <section id="chaptersView" class="view active">
+            <div class="view-header chapters-view-header">
+                <h2 class="view-title">Mapa de Capítulos</h2>
+                <div class="global-progress">
+                    <div class="progress-label">Progreso Global</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="globalProgress"></div>
+                        <span class="progress-text" id="globalProgressText">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chapters-grid" id="chaptersGrid">
+                <!-- Los capítulos se renderizarán dinámicamente -->
+            </div>
+        </section>
+
+        <!-- Vista 2: Árbol de Habilidades -->
+        <section id="skillTreeView" class="view">
+            <div class="view-header">
+                <button class="btn-back" id="backToChapters">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Volver a Capítulos
+                </button>
+                <div class="chapter-info">
+                    <h2 class="view-title" id="chapterTitle">Capítulo</h2>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="chapterProgress"></div>
+                        <span class="progress-text" id="chapterProgressText">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="skill-tree-container">
+                <div class="tree-controls">
+                    <button class="btn-control" id="zoomInBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="11" y1="8" x2="11" y2="14"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                    <button class="btn-control" id="zoomOutBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                            <line x1="8" y1="11" x2="14" y2="11"></line>
+                        </svg>
+                    </button>
+                    <button class="btn-control" id="fitBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+                <div id="skillTreeNetwork"></div>
+            </div>
+        </section>
+
+        <!-- Vista 3: Detalle de Objetivo -->
+        <section id="objectiveDetailView" class="view">
+            <div class="view-header">
+                <button class="btn-back" id="backToSkillTree">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Volver al Árbol
+                </button>
+            </div>
+            <div class="objective-detail-container">
+                <div class="objective-header">
+                    <div class="objective-icon" id="objectiveIcon">🎯</div>
+                    <div class="objective-info">
+                        <h2 id="objectiveTitle">Título del Objetivo</h2>
+                        <div class="objective-meta">
+                            <span class="difficulty-badge" id="objectiveDifficulty">Medio</span>
+                            <span class="status-badge" id="objectiveStatus">En Progreso</span>
+                            <span class="category-badge" id="objectiveCategory"></span>
+                        </div>
+                        <p id="objectiveDescription">Descripción del objetivo</p>
+                    </div>
+                </div>
+
+                <div class="objective-progress-section">
+                    <div class="section-title">Progreso</div>
+                    <div class="progress-bar-container large">
+                        <div class="progress-bar" id="objectiveProgress"></div>
+                        <span class="progress-text" id="objectiveProgressText">0%</span>
+                    </div>
+                </div>
+
+                <div class="mini-objectives-section">
+                    <div class="section-title">Mini-Objetivos</div>
+                    <div class="mini-objectives-list" id="miniObjectivesList">
+                        <!-- Mini-objetivos se renderizarán dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="dependencies-section" id="dependenciesSection">
+                    <div class="section-title">Dependencias</div>
+                    <div class="dependencies-list" id="dependenciesList">
+                        <!-- Dependencias se renderizarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Vista 4: Panel de Administración -->
+        <section id="adminView" class="view">
+            <div class="view-header">
+                <button class="btn-back" id="backFromAdmin">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Salir del Modo Admin
+                </button>
+                <h2 class="view-title">Panel de Administración</h2>
+            </div>
+            <div class="admin-container">
+                <aside class="sidebar-panel">
+                    <!-- Sección Capítulos -->
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h3 class="panel-section-title">📚 Capítulos</h3>
+                            <button class="panel-btn-new" id="addChapterBtn">+ Nuevo</button>
+                        </div>
+                        <div class="panel-items-container" id="adminChaptersList">
+                            <!-- Los capítulos se renderizan dinámicamente aquí -->
+                            <div class="panel-empty-state">
+                                <span class="panel-empty-icon">📭</span>
+                                <p>Cargando capítulos...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Separador -->
+                    <div class="panel-divider"></div>
+
+                    <!-- Sección Categorías -->
+                    <div class="panel-section">
+                        <div class="panel-section-header">
+                            <h3 class="panel-section-title">🏷️ Categorías</h3>
+                            <button class="panel-btn-new" id="addCategoryBtn">+ Nueva</button>
+                        </div>
+                        <div class="panel-items-container" id="adminCategoriesList">
+                            <!-- Las categorías se renderizan dinámicamente aquí -->
+                        </div>
+                    </div>
+
+                    <!-- Separador -->
+                    <div class="panel-divider"></div>
+
+                    <!-- Sección Acciones -->
+                    <div class="panel-actions">
+                        <button class="panel-btn-undo" id="undoBtn" disabled>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M3 7v6h6"></path>
+                                <path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path>
+                            </svg>
+                            Deshacer
+                            <span class="undo-badge" id="undoCount">0</span>
+                        </button>
+                    </div>
+                </aside>
+                <div class="admin-main" id="adminMain">
+                    <div class="admin-welcome">
+                        <h3>👋 Bienvenido al Panel de Administración</h3>
+                        <p>Selecciona un capítulo de la lista para comenzar a editar, o crea uno nuevo.</p>
+                        <div class="admin-tips">
+                            <h4>💡 Consejos:</h4>
+                            <ul>
+                                <li>Haz <strong>click derecho</strong> en un objetivo para editar dependencias</li>
+                                <li>Puedes <strong>deshacer</strong> hasta 10 acciones recientes</li>
+                                <li>Los cambios se <strong>guardan automáticamente</strong> cada 5 minutos</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vista 5: Panel de Objetivos Diarios -->
+        <section id="dailyGoalsView" class="view">
+            <div class="view-header">
+                <button class="btn-back" id="backFromDailyGoals">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Volver a Capítulos
+                </button>
+                <h2 class="view-title">📅 Objetivos Diarios</h2>
+            </div>
+
+            <!-- Sub-vista: Meses -->
+            <div id="monthsListView" class="daily-subview active">
+                <div class="months-grid" id="monthsGrid">
+                    <!-- Meses se renderizan dinámicamente -->
+                </div>
+                <div class="load-more-container">
+                    <button class="btn-secondary" id="loadMoreMonthsBtn">
+                        Cargar Meses Anteriores
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sub-vista: Calendario Mensual -->
+            <div id="monthCalendarView" class="daily-subview">
+                <div class="calendar-header">
+                    <button class="btn-back-small" id="backToMonthsList">
+                        ← Volver a Meses
+                    </button>
+                    <h3 id="calendarMonthTitle">Enero 2026</h3>
+                </div>
+                <div class="calendar-weekdays">
+                    <div class="weekday">Dom</div>
+                    <div class="weekday">Lun</div>
+                    <div class="weekday">Mar</div>
+                    <div class="weekday">Mié</div>
+                    <div class="weekday">Jue</div>
+                    <div class="weekday">Vie</div>
+                    <div class="weekday">Sáb</div>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Días se renderizan dinámicamente -->
+                </div>
+
+                <!-- Gráfica de Progreso Mensual -->
+                <div class="monthly-chart-container">
+                    <h4 class="chart-title">📈 Progreso del Mes</h4>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Sub-vista: Detalle de Día -->
+            <div id="dayDetailView" class="daily-subview">
+                <div class="day-header">
+                    <button class="btn-back-small" id="backToCalendar">
+                        ← Volver al Calendario
+                    </button>
+                    <div class="day-info">
+                        <h3 id="dayTitle">Sábado, 4 de Enero 2026</h3>
+                        <div class="day-badge" id="dayBadge">Hoy</div>
+                    </div>
+                </div>
+
+                <div class="day-progress-section">
+                    <div class="progress-bar-container large">
+                        <div class="progress-bar" id="dayProgressBar"></div>
+                        <span class="progress-text" id="dayProgressText">0%</span>
+                    </div>
+                </div>
+
+                <div class="day-tasks-section">
+                    <div class="section-title">Tareas del Día</div>
+                    <div class="day-tasks-list" id="dayTasksList">
+                        <!-- Tareas se renderizan dinámicamente -->
+                    </div>
+
+                    <div class="add-task-container">
+                        <input type="text" id="newTaskInput" class="form-input" placeholder="Nueva tarea..." />
+                        <button class="btn-primary" id="addTaskBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Añadir Tarea
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Achievements View -->
+        <section id="achievementsView" class="view">
+            <div class="achievements-container">
+                <div class="achievements-header">
+                    <h2>🏆 Salón de la Fama</h2>
+                    <button class="btn-secondary" id="backFromAchievements">
+                        ← Volver
+                    </button>
+                </div>
+
+                <div class="achievements-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="achievementsUnlockedCount">0/35</div>
+                        <div class="stat-label">Logros Desbloqueados</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="achievementsScore">0</div>
+                        <div class="stat-label">Puntos Totales</div>
+                    </div>
+                </div>
+
+                <div class="achievements-filters">
+                    <button class="filter-btn active" data-filter="all">Todos</button>
+                    <button class="filter-btn" data-filter="bts_music">BTS & Música</button>
+                    <button class="filter-btn" data-filter="wwe">WWE</button>
+                    <button class="filter-btn" data-filter="breaking_bad">Breaking Bad</button>
+                    <button class="filter-btn" data-filter="literature">Literatura</button>
+                    <button class="filter-btn" data-filter="cultura">Cultura</button>
+                    <button class="filter-btn" data-filter="estoicism">Estoicismo</button>
+                    <button class="filter-btn" data-filter="mobility">Movilidad</button>
+                </div>
+
+                <div class="achievements-grid" id="achievementsGrid">
+                    <!-- Las tarjetas se renderizan dinámicamente -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Context Menu (Right-Click) -->
+    <div id="contextMenu" class="context-menu hidden">
+        <div class="context-menu-item" data-action="edit">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Editar Objetivo
+        </div>
+        <div class="context-menu-item" data-action="dependencies">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6"></path>
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+            Editar Dependencias
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" data-action="delete">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Eliminar
+        </div>
+    </div>
+
+    <!-- Modal de Importación -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Importar Progreso</h3>
+                <button class="modal-close" id="closeImportModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Selecciona el archivo JSON exportado anteriormente. Esto sobrescribirá el progreso actual.</p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="importFileInput" accept=".json">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelImport">Cancelar</button>
+                <button class="btn btn-primary" id="confirmImport">Importar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Sincronización en la Nube -->
+    <div class="modal-overlay" id="syncModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Sincronización en la Nube (GitHub Gist)</h3>
+                <button class="modal-close" id="closeSyncModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="sync-status alert alert-info" id="syncStatus">
+                    Configura tu conexión para guardar el progreso en la nube gratis.
+                </div>
+
+                <div class="form-group">
+                    <label for="githubToken">GitHub Personal Access Token (Classic)</label>
+                    <input type="password" id="githubToken" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" class="form-input">
+                    <div class="help-text">Permisos necesarios: <code>gist</code></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gistId">Gist ID</label>
+                    <input type="text" id="gistId" placeholder="Ej: 8f4b..." class="form-input">
+                    <div class="help-text">ID del Gist donde se guardarán los datos (parte final de la URL del gist)
+                    </div>
+                </div>
+
+                <div class="sync-actions">
+                    <button class="btn btn-primary full-width mb-2" id="syncUploadBtn">
+                        <span class="icon">☁️⬆️</span> Subir Local a Nube
+                    </button>
+                    <button class="btn btn-secondary full-width" id="syncDownloadBtn">
+                        <span class="icon">☁️⬇️</span> Bajar Nube a Local
+                    </button>
+                </div>
+
+                <div class="last-sync-info" id="lastSyncInfo">
+                    Última sincronización: Nunca
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="saveSyncConfigBtn">Guardar Configuración</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar/Crear Capítulo -->
+    <div class="modal-overlay" id="chapterModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="chapterModalTitle">Crear Capítulo</h3>
+                <button class="modal-close" id="closeChapterModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Icono (Emoji)</label>
+                    <div class="emoji-input-container">
+                        <input type="text" id="chapterIconInput" class="form-input emoji-display" readonly value="🎯">
+                        <button class="btn-secondary" id="chooseChapterIcon">Elegir Emoji</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Título</label>
+                    <input type="text" id="chapterTitleInput" class="form-input" placeholder="Nombre del capítulo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea id="chapterDescInput" class="form-textarea" rows="3"
+                        placeholder="Descripción del capítulo"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelChapterEdit">Cancelar</button>
+                <button class="btn-primary" id="saveChapter">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar/Crear Objetivo -->
+    <div class="modal-overlay" id="objectiveModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="objectiveModalTitle">Crear Objetivo</h3>
+                <button class="modal-close" id="closeObjectiveModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Icono (Emoji)</label>
+                    <div class="emoji-input-container">
+                        <input type="text" id="objectiveIconInput" class="form-input emoji-display" readonly value="🎯">
+                        <button class="btn-secondary" id="chooseObjectiveIcon">Elegir Emoji</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Título</label>
+                    <input type="text" id="objectiveTitleInput" class="form-input" placeholder="Nombre del objetivo">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea id="objectiveDescInput" class="form-textarea" rows="3"
+                        placeholder="Descripción del objetivo"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Dificultad</label>
+                    <select id="objectiveDifficultySelect" class="form-select">
+                        <option value="easy">Fácil (1 unidad)</option>
+                        <option value="medium" selected>Medio (2 unidades)</option>
+                        <option value="hard">Difícil (4 unidades)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Categoría</label>
+                    <select id="objectiveCategorySelect" class="form-select">
+                        <option value="learn">🌱 Learn (Aprendizaje)</option>
+                        <option value="physic">💪 Physic (Físico)</option>
+                        <option value="social">🤝 Social</option>
+                        <option value="mental">🧠 Mental</option>
+                        <option value="work">💼 Work (Trabajo)</option>
+                        <option value="purpose">⭐ Purpose (Propósito)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelObjectiveEdit">Cancelar</button>
+                <button class="btn-primary" id="saveObjective">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editor de Dependencias -->
+    <div class="modal-overlay" id="dependencyModal">
+        <div class="modal large">
+            <div class="modal-header">
+                <h3>Editar Dependencias</h3>
+                <button class="modal-close" id="closeDependencyModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-help-text">Selecciona los objetivos que deben completarse antes de este:</p>
+                <div id="dependencyList" class="dependency-selector">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+                <div id="circularWarning" class="modal-warning hidden">
+                    ⚠️ Advertencia: Esta dependencia podría crear un ciclo circular
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelDependencyEdit">Cancelar</button>
+                <button class="btn-primary" id="saveDependencies">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar/Crear Categoría -->
+    <div class="modal-overlay" id="categoryModal">
+        <div class="modal small">
+            <div class="modal-header">
+                <h3>Nueva Categoría</h3>
+                <button class="modal-close" id="closeCategoryModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" id="categoryNameInput" class="form-input" placeholder="Nombre de la categoría">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Color</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="categoryColorInput" class="form-color-input" value="#4ade80">
+                        <span id="categoryColorHex">#4ade80</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelCategoryEdit">Cancelar</button>
+                <button class="btn-primary" id="saveCategory">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Emoji Picker -->
+    <div class="modal-overlay" id="emojiPickerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Elegir Emoji</h3>
+                <button class="modal-close" id="closeEmojiPicker">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="emojiSearch" class="form-input" placeholder="🔍 Buscar emoji...">
+                <div class="emoji-categories">
+                    <button class="emoji-category-btn active" data-category="all">Todos</button>
+                    <button class="emoji-category-btn" data-category="smileys">😊 Emociones</button>
+                    <button class="emoji-category-btn" data-category="objects">🎯 Objetos</button>
+                    <button class="emoji-category-btn" data-category="symbols">💡 Símbolos</button>
+                    <button class="emoji-category-btn" data-category="nature">🌱 Naturaleza</button>
+                    <button class="emoji-category-btn" data-category="activities">⚽ Actividades</button>
+                </div>
+                <div class="emoji-picker" id="emojiGrid">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="achievements.js"></script>
+    <script src="app.js"></script>
+    <script src="admin.js"></script>
+</body>
+
+</html>
