@@ -2361,11 +2361,17 @@ function init() {
         toggleAdminView();
     });
 
-    document.getElementById('exportBtn').addEventListener('click', exportProgress);
+    const exportBtn = document.getElementById('exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', exportProgress);
+    }
 
-    document.getElementById('importBtn').addEventListener('click', () => {
-        document.getElementById('importModal').classList.add('active');
-    });
+    const importBtn = document.getElementById('importBtn');
+    if (importBtn) {
+        importBtn.addEventListener('click', () => {
+            document.getElementById('importModal').classList.add('active');
+        });
+    }
 
     document.getElementById('resetBtn').addEventListener('click', () => {
         if (confirm('¿Estás seguro de que quieres reiniciar todo tu progreso? Esta acción no se puede deshacer.')) {
