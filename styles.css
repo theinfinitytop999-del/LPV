@@ -2813,4 +2813,85 @@ body {
 .btn-secondary:hover {
     background-color: var(--border);
     border-color: var(--accent-primary);
+}/* ============================================================================
+   MOBILE RESPONSIVENESS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .app-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+        height: auto;
+        min-height: 60px;
+    }
+
+    .header-content {
+        flex-direction: row;
+        /* Mantener fila (Logo izquierda - Iconos derecha) */
+        gap: var(--spacing-sm);
+        align-items: center;
+        flex-wrap: nowrap;
+    }
+
+    .logo {
+        font-size: 1.4rem;
+        cursor: pointer;
+        white-space: nowrap;
+        flex-shrink: 0;
+        /* Logo no se encoge */
+        margin-right: 5px;
+    }
+
+    .logo-icon {
+        font-size: 1.8rem;
+    }
+
+    /* Ocultar texto del logo en móviles muy pequeños si es necesario */
+    @media (max-width: 380px) {
+        .logo {
+            font-size: 0;
+        }
+
+        .logo-icon {
+            font-size: 1.8rem;
+            display: block;
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        /* Asegurar flex */
+        width: auto;
+        flex: 1;
+        /* Ocupar todo el espacio restante */
+        justify-content: flex-end;
+        /* Alinear iconos a la derecha */
+        align-items: center;
+
+        /* Scroll SÓLO si no caben */
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+
+        /* Ajustes visuales */
+        padding-bottom: 0;
+        /* Quitar padding extra si no hay scrollbar visible */
+        scrollbar-width: none;
+
+        /* Máscara de desvanecimiento para indicar scroll */
+        mask-image: linear-gradient(to left, black 85%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to left, black 85%, transparent 100%);
+    }
+
+    .header-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .btn-icon {
+        padding: 8px;
+        min-width: 40px;
+        height: 40px;
+        flex-shrink: 0;
+        /* Botones no se aplastan */
+        font-size: 1rem;
+    }
 }
