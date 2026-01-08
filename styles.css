@@ -123,8 +123,21 @@ body {
 }
 
 .header-actions {
-    display: flex;
     gap: var(--spacing-sm);
+    /* Mobile First Improvements */
+    overflow-x: auto;
+    padding-bottom: 5px;
+    /* Espacio para scrollbar si aparece */
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll en iOS */
+    max-width: 100%;
+    scrollbar-width: none;
+    /* Ocultar scrollbar en Firefox */
+}
+
+.header-actions::-webkit-scrollbar {
+    display: none;
+    /* Ocultar scrollbar en Chrome/Safari */
 }
 
 /* Botones de Icono */

@@ -351,6 +351,17 @@ const ACHIEVEMENTS = {
         }
     },
 
+    // === Especial ===
+    the_third_eye: {
+        id: 'the_third_eye',
+        name: 'El Tercer Ojo',
+        description: 'Realizar Visualización y Journaling durante 21 días consecutivos.',
+        category: 'culture',
+        icon: '👁️',
+        renewable: false,
+        condition: () => getConsecutiveThirdEyeDays(gameData) >= 21
+    },
+
     rebirth: {
         id: 'rebirth',
         name: 'The Reborn',

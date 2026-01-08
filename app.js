@@ -368,7 +368,8 @@ window.appState = {
     currentMonth: null,
     currentDay: null,
     monthsLoaded: 2,
-    dailyGoalsView: 'months'
+    dailyGoalsView: 'months',
+    syncTimeout: null // Para debounce de auto-sync
 };
 
 // ============================================================================
@@ -400,6 +401,14 @@ function saveProgress(showNotification = false) {
         appState.dataChanged = false;
         if (showNotification) {
             showToast('Progreso guardado exitosamente', 'success');
+        }
+
+        // Auto-Sync silencioso (Debounce de 2 segundos)
+        if (getSyncConfig()) {
+            if (appState.syncTimeout) clearTimeout(appState.syncTimeout);
+            appState.syncTimeout = setTimeout(() => {
+                uploadToGist(true); // true = silent mode
+            }, 2000);
         }
     } catch (error) {
         console.error('Error guardando progreso:', error);
@@ -769,6 +778,31 @@ function getConsecutiveSleepScheduleDays(data) {
 // Helper: Racha de meditación
 function getConsecutiveMeditationDays(data) {
     return getConsecutiveTaskStreak(data, 'Meditar');
+}
+
+// Helper: Racha de Tercer Ojo (Visualización + Journaling)
+function getConsecutiveThirdEyeDays(data) {
+    let consecutive = 0;
+    const today = new Date();
+
+    for (let i = 0; i < 100; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dateISO = d.toISOString().split('T')[0];
+
+        const day = data.dailyGoals.days[dateISO];
+        if (!day) break;
+
+        const hasVis = day.tasks.some(t => t.text.toLowerCase().includes('visualización') && t.completed);
+        const hasJournal = day.tasks.some(t => t.text.toLowerCase().includes('journaling') && t.completed);
+
+        if (hasVis && hasJournal) {
+            consecutive++;
+        } else {
+            break;
+        }
+    }
+    return consecutive;
 }
 
 // Helper: Contar días dorados totales
@@ -2130,17 +2164,21 @@ function updateSyncUI() {
 }
 
 // SUBIR datos a Gist
-async function uploadToGist() {
+async function uploadToGist(silent = false) {
     const config = getSyncConfig();
     if (!config) {
-        showToast('Configura primero tu Token y Gist ID', 'error');
+        if (!silent) showToast('Configura primero tu Token y Gist ID', 'error');
         return;
     }
 
     const btn = document.getElementById('syncUploadBtn');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="icon">⏳</span> Subiendo...';
-    btn.disabled = true;
+    let originalText = '';
+
+    if (!silent && btn) {
+        originalText = btn.innerHTML;
+        btn.innerHTML = '<span class="icon">⏳</span> Subiendo...';
+        btn.disabled = true;
+    }
 
     try {
         // Preparar contenido
@@ -2166,15 +2204,21 @@ async function uploadToGist() {
 
         localStorage.setItem('lpv_last_sync', new Date().toISOString());
         updateSyncUI();
-        showToast('Progreso subido a la nube correctamente', 'success');
-        playSound('achievement'); // Sonido de éxito
+        if (!silent) {
+            showToast('Progreso subido a la nube correctamente', 'success');
+            playSound('achievement'); // Sonido de éxito solo si es manual
+        } else {
+            console.log('☁️ Auto-sync complete');
+        }
 
     } catch (error) {
         console.error('❌ Upload failed:', error);
-        showToast(`Error al subir: ${error.message}`, 'error');
+        if (!silent) showToast(`Error al subir: ${error.message}`, 'error');
     } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        if (!silent && btn) {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
     }
 }
 
@@ -2250,7 +2294,9 @@ function init() {
                 { id: 'default_1', text: 'Meditar', isDefault: true },
                 { id: 'default_2', text: 'Hacer ejercicio', isDefault: true },
                 { id: 'default_3', text: 'Leer', isDefault: true },
-                { id: 'default_4', text: 'Horario de sueño 7-8h', isDefault: true }
+                { id: 'default_4', text: 'Horario de sueño 7-8h', isDefault: true },
+                { id: 'default_5', text: 'Visualización', isDefault: true },
+                { id: 'default_6', text: 'Journaling', isDefault: true }
             ],
             days: {},
             customCategories: []
@@ -2258,13 +2304,19 @@ function init() {
         saveProgress();
     }
 
-    // Migración: Añadir 4to objetivo si no existe
-    if (gameData.dailyGoals.defaultTasks.length === 3) {
-        gameData.dailyGoals.defaultTasks.push({
-            id: 'default_4',
-            text: 'Horario de sueño 7-8h',
-            isDefault: true
-        });
+    // Migración: Añadir 4to objetivo y Tercer Ojo si no existe
+    if (gameData.dailyGoals.defaultTasks.length < 6) {
+        const currentTexts = gameData.dailyGoals.defaultTasks.map(t => t.text);
+
+        if (!currentTexts.includes('Horario de sueño 7-8h')) {
+            gameData.dailyGoals.defaultTasks.push({ id: 'default_4', text: 'Horario de sueño 7-8h', isDefault: true });
+        }
+        if (!currentTexts.includes('Visualización')) {
+            gameData.dailyGoals.defaultTasks.push({ id: 'default_5', text: 'Visualización', isDefault: true });
+        }
+        if (!currentTexts.includes('Journaling')) {
+            gameData.dailyGoals.defaultTasks.push({ id: 'default_6', text: 'Journaling', isDefault: true });
+        }
         saveProgress();
     }
 
@@ -2282,6 +2334,17 @@ function init() {
     renderChaptersView();
 
     // Event Listeners - Navegación
+    renderChaptersView();
+
+    // Event Listeners - Navegación
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.addEventListener('click', () => {
+            switchView('chaptersView');
+            renderChaptersView();
+        });
+    }
+
     document.getElementById('backToChapters').addEventListener('click', () => {
         switchView('chaptersView');
         renderChaptersView();
