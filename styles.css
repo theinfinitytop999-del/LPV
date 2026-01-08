@@ -123,6 +123,8 @@ body {
 }
 
 .header-actions {
+    display: flex;
+    align-items: center;
     gap: var(--spacing-sm);
     /* Mobile First Improvements */
     overflow-x: auto;
